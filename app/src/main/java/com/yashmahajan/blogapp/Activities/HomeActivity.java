@@ -1,8 +1,13 @@
 package com.yashmahajan.blogapp.Activities;
 
+import android.app.Dialog;
+import android.content.Intent;
+import android.graphics.Color;
+import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
+import android.view.Gravity;
 import android.view.View;
 import android.support.design.widget.NavigationView;
 import android.support.v4.view.GravityCompat;
@@ -13,11 +18,16 @@ import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.ImageView;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import com.bumptech.glide.Glide;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.yashmahajan.blogapp.Fragments.AboutFragment;
+import com.yashmahajan.blogapp.Fragments.HomeFeedFragment;
+import com.yashmahajan.blogapp.Fragments.ProfileFragment;
+import com.yashmahajan.blogapp.Fragments.SettingsFragment;
 import com.yashmahajan.blogapp.R;
 
 public class HomeActivity extends AppCompatActivity
@@ -25,6 +35,11 @@ public class HomeActivity extends AppCompatActivity
 
     FirebaseAuth mAuth;
     FirebaseUser currentUser;
+    Dialog popupAddPost;
+
+    ImageView popupUserPhoto, popupPostPhoto, popupAddBtn;
+    TextView popupTitle, popupDescription;
+    ProgressBar popupProgressBar;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -36,12 +51,13 @@ public class HomeActivity extends AppCompatActivity
         mAuth = FirebaseAuth.getInstance();
         currentUser = mAuth.getCurrentUser();
 
+        iniPopup();
+
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onClick(View view) {
-                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                        .setAction("Action", null).show();
+            public void onClick(View v) {
+                popupAddPost.show();
             }
         });
 
@@ -55,6 +71,38 @@ public class HomeActivity extends AppCompatActivity
         navigationView.setNavigationItemSelectedListener(this);
 
         updateNavHeader();
+
+        getSupportFragmentManager().beginTransaction().replace(R.id.container, new HomeFeedFragment()).commit();
+        getSupportActionBar().setTitle("Home");
+    }
+
+    private void iniPopup() {
+
+        popupAddPost = new Dialog(this);
+        popupAddPost.setContentView(R.layout.popup_add_post);
+        popupAddPost.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+        popupAddPost.getWindow().setLayout(Toolbar.LayoutParams.MATCH_PARENT, Toolbar.LayoutParams.WRAP_CONTENT);
+        popupAddPost.getWindow().getAttributes().gravity = Gravity.TOP;
+
+
+        popupUserPhoto = popupAddPost.findViewById(R.id.popup_user_photo);
+        popupPostPhoto = popupAddPost.findViewById(R.id.popup_post_image);
+        popupAddBtn = popupAddPost.findViewById(R.id.popup_edit_image);
+        popupTitle = popupAddPost.findViewById(R.id.popup_title);
+        popupDescription = popupAddPost.findViewById(R.id.popup_description);
+        popupProgressBar = popupAddPost.findViewById(R.id.popup_progressbar);
+
+        Glide.with(HomeActivity.this).load(currentUser.getPhotoUrl()).into(popupUserPhoto);
+
+        popupAddBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                popupAddBtn.setVisibility(View.INVISIBLE);
+                popupProgressBar.setVisibility(View.VISIBLE);
+            }
+        });
+
+
     }
 
     @Override
@@ -95,17 +143,32 @@ public class HomeActivity extends AppCompatActivity
         // Handle navigation view item clicks here.
         int id = item.getItemId();
 
-        if (id == R.id.nav_camera) {
-            // Handle the camera action
-        } else if (id == R.id.nav_gallery) {
+        if (id == R.id.nav_home) {
 
-        } else if (id == R.id.nav_slideshow) {
+            getSupportActionBar().setTitle("Home");
+            getSupportFragmentManager().beginTransaction().replace(R.id.container, new HomeFeedFragment()).commit();
 
-        } else if (id == R.id.nav_manage) {
+        } else if (id == R.id.nav_profile) {
 
-        } else if (id == R.id.nav_share) {
+            getSupportActionBar().setTitle("Profile");
+            getSupportFragmentManager().beginTransaction().replace(R.id.container, new ProfileFragment()).commit();
 
-        } else if (id == R.id.nav_logout) {
+        } else if (id == R.id.nav_settings) {
+
+            getSupportActionBar().setTitle("Settings");
+            getSupportFragmentManager().beginTransaction().replace(R.id.container, new SettingsFragment()).commit();
+
+        } else if (id == R.id.nav_about) {
+
+            getSupportActionBar().setTitle("About");
+            getSupportFragmentManager().beginTransaction().replace(R.id.container, new AboutFragment()).commit();
+
+        }else if (id == R.id.nav_logout) {
+
+            FirebaseAuth.getInstance().signOut();
+            Intent loginActivity = new Intent(getApplicationContext(), LoginActivity.class);
+            startActivity(loginActivity);
+            finish();
 
         }
 
@@ -120,7 +183,7 @@ public class HomeActivity extends AppCompatActivity
         View headerView = navigationView.getHeaderView(0);
         TextView navUserName = headerView.findViewById(R.id.nav_username);
         TextView navUserEmail = headerView.findViewById(R.id.nav_useremail);
-        ImageView navUserPhoto = headerView.findViewById(R.id.nav_userphoto);
+        ImageView navUserPhoto = headerView.findViewById(R.id.popup_user_photo);
 
         navUserName.setText(currentUser.getDisplayName());
         navUserEmail.setText(currentUser.getEmail());
