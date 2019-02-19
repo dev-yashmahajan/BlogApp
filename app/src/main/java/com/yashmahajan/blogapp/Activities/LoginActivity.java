@@ -1,7 +1,6 @@
 package com.yashmahajan.blogapp.Activities;
 
 import android.content.Intent;
-import android.os.Build;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -50,7 +49,7 @@ public class LoginActivity extends AppCompatActivity {
 
         mAuth = FirebaseAuth.getInstance();
 
-        loginPhoto = findViewById(R.id.loginPhoto);
+        loginPhoto = findViewById(R.id.userPhoto);
 
         regText = findViewById(R.id.regText);
         regText.setOnClickListener(new View.OnClickListener() {

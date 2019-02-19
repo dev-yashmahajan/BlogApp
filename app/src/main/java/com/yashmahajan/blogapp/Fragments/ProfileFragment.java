@@ -1,13 +1,31 @@
 package com.yashmahajan.blogapp.Fragments;
 
+import android.Manifest;
 import android.content.Context;
+import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.graphics.Color;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
+import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
+import android.support.v4.content.ContextCompat;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
+import android.widget.EditText;
+import android.widget.ImageView;
+import android.widget.TextView;
+import android.widget.Toast;
 
+import com.bumptech.glide.Glide;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+import com.yashmahajan.blogapp.Activities.RegisterActivity;
 import com.yashmahajan.blogapp.R;
 
 /**
@@ -29,6 +47,13 @@ public class ProfileFragment extends Fragment {
     private String mParam2;
 
     private OnFragmentInteractionListener mListener;
+
+
+    private FirebaseAuth mAuth;
+    private FirebaseUser currentUser;
+    private EditText username,useremail;
+    private Button edit, save;
+    private ImageView userPhoto;
 
     public ProfileFragment() {
         // Required empty public constructor
@@ -68,6 +93,86 @@ public class ProfileFragment extends Fragment {
         return inflater.inflate(R.layout.fragment_profile, container, false);
     }
 
+
+    @Override
+    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+
+
+        mAuth = FirebaseAuth.getInstance();
+        currentUser = mAuth.getCurrentUser();
+
+        userPhoto = view.findViewById(R.id.userPhoto);
+        Glide.with(this).load(currentUser.getPhotoUrl()).into(userPhoto);
+
+        username = view.findViewById(R.id.userName);
+        username.setText(currentUser.getDisplayName());
+        username.setTextColor(Color.BLACK);
+        username.setEnabled(false);
+
+
+        useremail = view.findViewById(R.id.userEmail);
+        useremail.setText(currentUser.getEmail());
+        useremail.setTextColor(Color.BLACK);
+        useremail.setEnabled(false);
+
+
+        edit = view.findViewById(R.id.profileEdit);
+        save = view.findViewById(R.id.profileSave);
+
+        save.setClickable(false);
+        save.setAlpha(.2f);
+
+        userPhoto.setClickable(false);
+
+        edit.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+
+                edit.setClickable(false);
+                edit.setAlpha(.2f);
+                save.setClickable(true);
+                save.setAlpha(1);
+                //username.setEnabled(true);
+                //useremail.setEnabled(true);
+
+//                userPhoto.setOnClickListener(new View.OnClickListener() {
+//                    @Override
+//                    public void onClick(View v) {
+//
+//                        if (Build.VERSION.SDK_INT >= 23){
+//                            checkAndRequestForPermission();
+//                        }
+//                        else {
+//                            openGallery();
+//                        }
+//                    }
+//                });
+            }
+        });
+
+        save.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+
+
+                save.setClickable(false);
+                save.setAlpha(.2f);
+                edit.setClickable(true);
+                edit.setAlpha(1);
+
+
+
+
+
+                userPhoto.setClickable(false);
+                username.setEnabled(false);
+                useremail.setEnabled(false);
+            }
+        });
+
+    }
+
     // TODO: Rename method, update argument and hook method into UI event
     public void onButtonPressed(Uri uri) {
         if (mListener != null) {
@@ -100,5 +205,34 @@ public class ProfileFragment extends Fragment {
     public interface OnFragmentInteractionListener {
         // TODO: Update argument type and name
         void onFragmentInteraction(Uri uri);
+    }
+
+
+    private void openGallery() {
+        //TODO: Open Gallery Intent and wait for user to pick an image
+
+        Intent galleryIntent = new Intent(Intent.ACTION_GET_CONTENT);
+        galleryIntent.setType("image/*");
+        startActivityForResult(galleryIntent, 1);
+
+    }
+
+    private void checkAndRequestForPermission() {
+        if (ContextCompat.checkSelfPermission(getContext(), Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED){
+
+            if (ActivityCompat.shouldShowRequestPermissionRationale(getActivity(), Manifest.permission.READ_EXTERNAL_STORAGE)){
+                Toast.makeText(getContext(), "Please accept for required permission", Toast.LENGTH_SHORT).show();
+            }
+            else {
+
+                ActivityCompat.requestPermissions(getActivity(),
+                        new String[]{Manifest.permission.READ_EXTERNAL_STORAGE},
+                        1);
+            }
+        }
+        else {
+            openGallery();
+        }
+
     }
 }

@@ -8,7 +8,7 @@
     android:background="#ffffff">
 
     <de.hdodenhof.circleimageview.CircleImageView xmlns:app="http://schemas.android.com/apk/res-auto"
-        android:id="@+id/loginPhoto"
+        android:id="@+id/userPhoto"
         android:layout_width="96dp"
         android:layout_height="96dp"
         android:layout_marginStart="8dp"

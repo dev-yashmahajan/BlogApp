@@ -10,7 +10,7 @@ android:background="#ffffff">
 
 
     <de.hdodenhof.circleimageview.CircleImageView xmlns:app="http://schemas.android.com/apk/res-auto"
-        android:id="@+id/loginPhoto"
+        android:id="@+id/userPhoto"
         android:layout_width="100dp"
         android:layout_height="100dp"
         android:layout_marginStart="8dp"
@@ -39,7 +39,7 @@ android:background="#ffffff">
         android:textStyle="bold"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/loginPhoto" />
+        app:layout_constraintTop_toBottomOf="@+id/userPhoto" />
 
     <View
         android:id="@+id/view"
