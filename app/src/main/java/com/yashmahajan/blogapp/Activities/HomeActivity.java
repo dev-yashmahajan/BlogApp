@@ -41,6 +41,8 @@ public class HomeActivity extends AppCompatActivity
     TextView popupTitle, popupDescription;
     ProgressBar popupProgressBar;
 
+    FloatingActionButton fab;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -53,7 +55,7 @@ public class HomeActivity extends AppCompatActivity
 
         iniPopup();
 
-        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
+        fab = (FloatingActionButton) findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -118,8 +120,9 @@ public class HomeActivity extends AppCompatActivity
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.home, menu);
-        return true;
+//        getMenuInflater().inflate(R.menu.home, menu);
+//        return true;
+        return false;
     }
 
     @Override
@@ -145,21 +148,25 @@ public class HomeActivity extends AppCompatActivity
 
         if (id == R.id.nav_home) {
 
+            fab.setVisibility(View.VISIBLE);
             getSupportActionBar().setTitle("Home");
             getSupportFragmentManager().beginTransaction().replace(R.id.container, new HomeFeedFragment()).commit();
 
         } else if (id == R.id.nav_profile) {
 
+            fab.setVisibility(View.INVISIBLE);
             getSupportActionBar().setTitle("Profile");
             getSupportFragmentManager().beginTransaction().replace(R.id.container, new ProfileFragment()).commit();
 
         } else if (id == R.id.nav_settings) {
 
+            fab.setVisibility(View.INVISIBLE);
             getSupportActionBar().setTitle("Settings");
             getSupportFragmentManager().beginTransaction().replace(R.id.container, new SettingsFragment()).commit();
 
         } else if (id == R.id.nav_about) {
 
+            fab.setVisibility(View.INVISIBLE);
             getSupportActionBar().setTitle("About");
             getSupportFragmentManager().beginTransaction().replace(R.id.container, new AboutFragment()).commit();
 
