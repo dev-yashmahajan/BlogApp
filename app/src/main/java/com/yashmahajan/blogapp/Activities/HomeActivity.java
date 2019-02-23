@@ -1,12 +1,20 @@
 package com.yashmahajan.blogapp.Activities;
 
+import android.Manifest;
 import android.app.Dialog;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
+import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
 import android.view.Gravity;
 import android.view.View;
 import android.support.design.widget.NavigationView;
@@ -20,19 +28,30 @@ import android.view.MenuItem;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.StorageReference;
+import com.google.firebase.storage.UploadTask;
 import com.yashmahajan.blogapp.Fragments.AboutFragment;
 import com.yashmahajan.blogapp.Fragments.HomeFeedFragment;
 import com.yashmahajan.blogapp.Fragments.ProfileFragment;
 import com.yashmahajan.blogapp.Fragments.SettingsFragment;
+import com.yashmahajan.blogapp.Models.Post;
 import com.yashmahajan.blogapp.R;
 
 public class HomeActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
 
+    private static final int PReqCode = 2;
+    private static final int REQUESCODE = 2;
     FirebaseAuth mAuth;
     FirebaseUser currentUser;
     Dialog popupAddPost;
@@ -42,6 +61,7 @@ public class HomeActivity extends AppCompatActivity
     ProgressBar popupProgressBar;
 
     FloatingActionButton fab;
+    private Uri pickedImageUri = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -54,6 +74,7 @@ public class HomeActivity extends AppCompatActivity
         currentUser = mAuth.getCurrentUser();
 
         iniPopup();
+        setupPopupImageClick();
 
         fab = (FloatingActionButton) findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
@@ -76,6 +97,24 @@ public class HomeActivity extends AppCompatActivity
 
         getSupportFragmentManager().beginTransaction().replace(R.id.container, new HomeFeedFragment()).commit();
         getSupportActionBar().setTitle("Home");
+    }
+
+    private void setupPopupImageClick() {
+
+        popupPostPhoto.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+
+                if (Build.VERSION.SDK_INT >= 23){
+                            checkAndRequestForPermission();
+                        }
+                        else {
+                            openGallery();
+                        }
+                    }
+            });
+
+
     }
 
     private void iniPopup() {
@@ -101,10 +140,122 @@ public class HomeActivity extends AppCompatActivity
             public void onClick(View v) {
                 popupAddBtn.setVisibility(View.INVISIBLE);
                 popupProgressBar.setVisibility(View.VISIBLE);
+
+                if (!popupTitle.getText().toString().isEmpty()
+                        && !popupDescription.getText().toString().isEmpty() &&  pickedImageUri != null){
+
+                    StorageReference storageReference = FirebaseStorage.getInstance().getReference().child("post_images");
+                    final StorageReference imageFilePath = storageReference.child(pickedImageUri.getLastPathSegment());
+                    imageFilePath.putFile(pickedImageUri).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
+                        @Override
+                        public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
+
+                            imageFilePath.getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
+                                @Override
+                                public void onSuccess(Uri uri) {
+
+                                    String imageDownloadLink = uri.toString();
+
+
+                                    Post post = new Post(popupTitle.getText().toString(),
+                                            popupDescription.getText().toString(),
+                                            imageDownloadLink,
+                                            currentUser.getUid(),
+                                            currentUser.getPhotoUrl().toString());
+
+                                    addPost(post);
+
+                                }
+                            }).addOnFailureListener(new OnFailureListener() {
+                                @Override
+                                public void onFailure(@NonNull Exception e) {
+                                    showMessage(e.getMessage());
+                                    popupAddBtn.setVisibility(View.VISIBLE);
+                                    popupProgressBar.setVisibility(View.INVISIBLE);
+                                }
+                            });
+                        }
+                    });
+
+
+                }else{
+                    showMessage("Please verify all the fields");
+                    popupAddBtn.setVisibility(View.VISIBLE);
+                    popupProgressBar.setVisibility(View.INVISIBLE);
+                }
             }
         });
 
 
+    }
+
+    private void addPost(Post post) {
+
+
+        FirebaseDatabase database = FirebaseDatabase.getInstance();
+        DatabaseReference myRef = database.getReference("Posts").push();
+
+        String key = myRef.getKey();
+        post.setPostKey(key);
+
+
+        myRef.setValue(post).addOnSuccessListener(new OnSuccessListener<Void>() {
+            @Override
+            public void onSuccess(Void aVoid) {
+
+                showMessage("Post Added Sucessfully");
+                popupAddBtn.setVisibility(View.VISIBLE);
+                popupProgressBar.setVisibility(View.INVISIBLE);
+                popupAddPost.dismiss();
+            }
+        });
+    }
+
+    private void checkAndRequestForPermission() {
+        if (ContextCompat.checkSelfPermission(HomeActivity.this, Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED){
+
+            if (ActivityCompat.shouldShowRequestPermissionRationale(HomeActivity.this, Manifest.permission.READ_EXTERNAL_STORAGE)){
+                Toast.makeText(HomeActivity.this, "Please accept for required permission", Toast.LENGTH_SHORT).show();
+            }
+            else {
+
+                ActivityCompat.requestPermissions(HomeActivity.this,
+                        new String[]{Manifest.permission.READ_EXTERNAL_STORAGE},
+                        PReqCode);
+            }
+        }
+        else {
+            openGallery();
+        }
+
+    }
+
+    private void openGallery() {
+        //TODO: Open Gallery Intent and wait for user to pick an image
+
+        Intent galleryIntent = new Intent(Intent.ACTION_GET_CONTENT);
+        galleryIntent.setType("image/*");
+        startActivityForResult(galleryIntent, REQUESCODE);
+
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        if (resultCode == RESULT_OK && requestCode == REQUESCODE && data != null){
+
+            //the user has successfully picked an image
+            //we need to save its reference to Uri variable
+            pickedImageUri = data.getData();
+            popupPostPhoto.setImageURI(pickedImageUri);
+
+        }
+    }
+
+    private void showMessage(String msg) {
+
+        Toast.makeText(getApplicationContext(), msg,Toast.LENGTH_LONG).show();
     }
 
     @Override

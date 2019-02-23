@@ -48,6 +48,8 @@ public class ProfileFragment extends Fragment {
 
     private OnFragmentInteractionListener mListener;
 
+    private static final int PReqCode = 3;
+    private static final int REQUESCODE = 3;
 
     private FirebaseAuth mAuth;
     private FirebaseUser currentUser;
@@ -213,7 +215,7 @@ public class ProfileFragment extends Fragment {
 
         Intent galleryIntent = new Intent(Intent.ACTION_GET_CONTENT);
         galleryIntent.setType("image/*");
-        startActivityForResult(galleryIntent, 1);
+        startActivityForResult(galleryIntent, REQUESCODE);
 
     }
 
@@ -227,7 +229,7 @@ public class ProfileFragment extends Fragment {
 
                 ActivityCompat.requestPermissions(getActivity(),
                         new String[]{Manifest.permission.READ_EXTERNAL_STORAGE},
-                        1);
+                        PReqCode);
             }
         }
         else {
